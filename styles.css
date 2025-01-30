@@ -13,7 +13,9 @@ body {
     background-color: #fff;
     width: 100%;
     justify-content: center;
+    align-items: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap;
 }
 
 canvas {
@@ -30,4 +32,31 @@ button.active {
     border-color: #007bff;
     background-color: #007bff;
     color: white;
+}
+
+#rangeValue,
+#opacityValue {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: inherit;
+    border: 2px solid grey;
+    padding: 4px;
+    font-weight: bold;
+    width: 15px;
+    height: 15px;
+    border-radius: 100%;
+}
+
+.range_div {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid gray;
+    padding: 2px;
+}
+
+#opacityValue {
+    border: none;
+    padding-right: 10px;
 }
