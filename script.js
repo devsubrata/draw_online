@@ -11,11 +11,13 @@ const tools = {
     verticalLine: document.getElementById("verticalLine"),
     rectangle: document.getElementById("rectangle"),
     filledRectangle: document.getElementById("filledRectangle"),
+    circle: document.getElementById("circle"),
+    filledCircle: document.getElementById("filledCircle"),
 };
 
 let painting = false;
 let brushSize = 1;
-let brushColor = "#01052b";
+let brushColor = "#081abd";
 let currentTool = "brush";
 let startX, startY;
 let snapshot; // To store canvas state before drawing a rectangle
@@ -29,14 +31,16 @@ function setActiveTool(tool) {
 
 function startPainting(e) {
     painting = true;
-
     startX = e.offsetX;
     startY = e.offsetY;
+
     ctx.beginPath();
 
     switch (currentTool) {
         case "rectangle":
         case "filledRectangle":
+        case "circle":
+        case "filledCircle":
             // Take a snapshot of the canvas before drawing the rectangle
             snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
             break;
@@ -78,6 +82,22 @@ function draw(e) {
             }
             break;
 
+        case "circle":
+        case "filledCircle":
+            ctx.putImageData(snapshot, 0, 0);
+            const radius = Math.sqrt((startX - e.offsetX) ** 2 + (startY - e.offsetY) ** 2);
+
+            ctx.beginPath();
+            ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+
+            if (currentTool === "circle") {
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = brushColor;
+                ctx.fill();
+            }
+            break;
+
         default:
             ctx.lineTo(e.offsetX, e.offsetY);
             ctx.stroke();
@@ -101,6 +121,8 @@ tools.horizontalLine.addEventListener("click", () => setActiveTool("horizontalLi
 tools.verticalLine.addEventListener("click", () => setActiveTool("verticalLine"));
 tools.rectangle.addEventListener("click", () => setActiveTool("rectangle"));
 tools.filledRectangle.addEventListener("click", () => setActiveTool("filledRectangle"));
+tools.circle.addEventListener("click", () => setActiveTool("circle"));
+tools.filledCircle.addEventListener("click", () => setActiveTool("filledCircle"));
 
 colorPicker.addEventListener("input", (e) => {
     brushColor = e.target.value;
