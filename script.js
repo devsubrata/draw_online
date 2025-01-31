@@ -21,19 +21,32 @@ let opacity = 1.0;
 let brushColor = `rgba(0,0,0,${opacity})`;
 let currentTool = "brush";
 let startX, startY;
-let snapshot; // To store canvas state before drawing a rectangle
+let snapshot; // Store canvas state before drawing a rectangle
 
-// Function to set the active tool and highlight it
+// Set active tool
 function setActiveTool(tool) {
     currentTool = tool;
     Object.values(tools).forEach((btn) => btn.classList.remove("active"));
     tools[tool].classList.add("active");
 }
 
+// Convert touch event to mouse-like coordinates
+function getTouchPos(evt) {
+    let rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.touches[0].clientX - rect.left,
+        y: evt.touches[0].clientY - rect.top,
+    };
+}
+
+// Start drawing
 function startPainting(e) {
+    e.preventDefault();
     painting = true;
-    startX = e.offsetX;
-    startY = e.offsetY;
+
+    let pos = e.type.includes("touch") ? getTouchPos(e) : { x: e.offsetX, y: e.offsetY };
+    startX = pos.x;
+    startY = pos.y;
 
     ctx.beginPath();
 
@@ -42,7 +55,6 @@ function startPainting(e) {
         case "filledRectangle":
         case "circle":
         case "filledCircle":
-            // Take a snapshot of the canvas before drawing the rectangle
             snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
             break;
         default:
@@ -50,8 +62,12 @@ function startPainting(e) {
     }
 }
 
+// Draw function
 function draw(e) {
     if (!painting) return;
+    e.preventDefault();
+
+    let pos = e.type.includes("touch") ? getTouchPos(e) : { x: e.offsetX, y: e.offsetY };
 
     ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
@@ -59,20 +75,16 @@ function draw(e) {
 
     switch (currentTool) {
         case "horizontalLine":
-            ctx.strokeRect(startX, startY, e.offsetX - startX, 1);
+            ctx.strokeRect(startX, startY, pos.x - startX, 1);
             break;
-
         case "verticalLine":
-            ctx.strokeRect(startX, startY, 1, e.offsetY - startY);
+            ctx.strokeRect(startX, startY, 1, pos.y - startY);
             break;
-
         case "rectangle":
         case "filledRectangle":
-            ctx.putImageData(snapshot, 0, 0); // Restore canvas before drawing a new rectangle
-
-            let width = e.offsetX - startX;
-            let height = e.offsetY - startY;
-
+            ctx.putImageData(snapshot, 0, 0);
+            let width = pos.x - startX;
+            let height = pos.y - startY;
             if (currentTool === "rectangle") {
                 ctx.strokeRect(startX, startY, width, height);
             } else {
@@ -80,15 +92,12 @@ function draw(e) {
                 ctx.fillRect(startX, startY, width, height);
             }
             break;
-
         case "circle":
         case "filledCircle":
             ctx.putImageData(snapshot, 0, 0);
-            const radius = Math.sqrt((startX - e.offsetX) ** 2 + (startY - e.offsetY) ** 2);
-
+            const radius = Math.sqrt((startX - pos.x) ** 2 + (startY - pos.y) ** 2);
             ctx.beginPath();
             ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-
             if (currentTool === "circle") {
                 ctx.stroke();
             } else {
@@ -96,22 +105,31 @@ function draw(e) {
                 ctx.fill();
             }
             break;
-
         default:
-            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
     }
 }
 
-function stopPainting(e) {
+// Stop drawing
+function stopPainting() {
     painting = false;
     ctx.closePath();
 }
 
-// Event Listeners
+// Event Listeners for mouse
 canvas.addEventListener("mousedown", startPainting);
 canvas.addEventListener("mousemove", draw);
 canvas.addEventListener("mouseup", stopPainting);
+canvas.addEventListener("mouseout", stopPainting);
+
+// Event Listeners for touch
+canvas.addEventListener("touchstart", startPainting);
+canvas.addEventListener("touchmove", draw);
+canvas.addEventListener("touchend", stopPainting);
+
+// Disable scrolling while drawing
+document.body.style.touchAction = "none";
 
 // Tool Handlers
 tools.brush.addEventListener("click", () => setActiveTool("brush"));
@@ -123,10 +141,12 @@ tools.filledRectangle.addEventListener("click", () => setActiveTool("filledRecta
 tools.circle.addEventListener("click", () => setActiveTool("circle"));
 tools.filledCircle.addEventListener("click", () => setActiveTool("filledCircle"));
 
+// Color Picker
 colorPicker.addEventListener("input", (e) => {
     brushColor = createRGBA(e.target.value, opacity);
 });
 
+// Brush Size
 brushSizeInput.addEventListener("input", (e) => {
     brushSize = e.target.value;
     document.getElementById("rangeValue").textContent =
@@ -146,34 +166,24 @@ document.getElementById("save").addEventListener("click", () => {
     link.click();
 });
 
+// Opacity Control
 document.getElementById("opacity").addEventListener("input", (e) => {
     opacity = e.target.value;
     document.getElementById("opacityValue").textContent = opacity;
-
     const { r, g, b } = extractRGB(brushColor);
     brushColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
 });
 
 function createRGBA(hex, opacity) {
-    // Remove the '#' if it's present
     hex = hex.replace("#", "");
-    // Convert the hex color to RGB
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
 function extractRGB(rgbaString) {
-    // Regular expression to match rgba values
     const rgbaRegex = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/;
-
     const match = rgbaString.match(rgbaRegex);
-
-    const r = parseInt(match[1], 10);
-    const g = parseInt(match[2], 10);
-    const b = parseInt(match[3], 10);
-
-    return { r, g, b };
+    return { r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10) };
 }
