@@ -22,6 +22,8 @@ let brushColor = `rgba(0,0,0,${opacity})`;
 let currentTool = "brush";
 let startX, startY;
 let snapshot; // Store canvas state before drawing a rectangle
+const undoStack = [];
+const redoStack = [];
 
 // Set active tool
 function setActiveTool(tool) {
@@ -115,6 +117,7 @@ function draw(e) {
 function stopPainting() {
     painting = false;
     ctx.closePath();
+    saveState();
 }
 
 // Event Listeners for mouse
@@ -174,6 +177,45 @@ document.getElementById("opacity").addEventListener("input", (e) => {
     brushColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
 });
 
+// Function to save the current canvas state
+function saveState() {
+    const state = canvas.toDataURL(); // Save canvas as data URL
+    undoStack.push(state); // Push to undo stack
+    redoStack.length = 0; // Clear redo stack when a new action is performed
+}
+
+// Undo functionality
+document.getElementById("undo").addEventListener("click", () => {
+    if (undoStack.length > 1) {
+        // Ensure there's a state to undo to
+        const currentState = undoStack.pop(); // Pop current state
+        redoStack.push(currentState); // Push to redo stack
+        const prevState = undoStack[undoStack.length - 1]; // Get previous state
+        restoreCanvas(prevState); // Restore canvas
+    }
+});
+
+// Redo functionality
+document.getElementById("redo").addEventListener("click", () => {
+    if (redoStack.length > 0) {
+        // Ensure there's a state to redo to
+        const nextState = redoStack.pop(); // Pop next state
+        undoStack.push(nextState); // Push to undo stack
+        restoreCanvas(nextState); // Restore canvas
+    }
+});
+
+// Function to restore canvas from a state
+function restoreCanvas(state) {
+    const img = new Image();
+    img.src = state;
+    img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+        ctx.drawImage(img, 0, 0); // Draw the saved state
+    };
+}
+
+// Helper function
 function createRGBA(hex, opacity) {
     hex = hex.replace("#", "");
     const r = parseInt(hex.substring(0, 2), 16);
