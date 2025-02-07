@@ -2,6 +2,7 @@ const canvas = document.getElementById("paintCanvas");
 const ctx = canvas.getContext("2d");
 const colorPicker = document.getElementById("colorPicker");
 const brushSizeInput = document.getElementById("brushSize");
+const expandButton = document.getElementById("expand_canvas");
 
 // Tools
 const tools = {
@@ -13,9 +14,11 @@ const tools = {
     filledRectangle: document.getElementById("filledRectangle"),
     circle: document.getElementById("circle"),
     filledCircle: document.getElementById("filledCircle"),
+    typeText: document.getElementById("typeText"),
 };
 
 let painting = false;
+let isTyping = false;
 let brushSize = 1;
 let opacity = 1.0;
 let brushColor = `rgba(0,0,0,${opacity})`;
@@ -27,6 +30,8 @@ const redoStack = [];
 
 // Set active tool
 function setActiveTool(tool) {
+    if (tool !== "typeText") isTyping = false;
+
     currentTool = tool;
     Object.values(tools).forEach((btn) => btn.classList.remove("active"));
     tools[tool].classList.add("active");
@@ -44,6 +49,8 @@ function getTouchPos(evt) {
 // Start drawing
 function startPainting(e) {
     e.preventDefault();
+    if (isTyping) return;
+
     painting = true;
 
     let pos = e.type.includes("touch") ? getTouchPos(e) : { x: e.offsetX, y: e.offsetY };
@@ -120,11 +127,46 @@ function stopPainting() {
     saveState();
 }
 
+function addText(x, y, text) {
+    ctx.font = "20px Arial";
+    ctx.fillStyle = brushColor;
+    ctx.fillText(text, x, y);
+}
+
+function showModal(e) {
+    if (!isTyping) return;
+
+    const modal = document.getElementById("modal");
+    const submitBtn = document.getElementById("submitText");
+    const textInput = document.getElementById("textInput");
+    const closeBtn = document.getElementById("closeModal");
+    if (textInput) textInput.focus();
+
+    // Position modal at click point
+    modal.style.left = `${e.pageX}px`;
+    modal.style.top = `${e.pageY}px`;
+    modal.style.display = "block";
+
+    // Remove previous event listener to prevent duplicates
+    submitBtn.onclick = () => {
+        if (textInput.value.trim() !== "") {
+            addText(e.offsetX, e.offsetY + 25, textInput.value);
+        }
+        modal.style.display = "none";
+        textInput.value = "";
+    };
+
+    closeBtn.onclick = () => {
+        modal.style.display = "none";
+    };
+}
+
 // Event Listeners for mouse
 canvas.addEventListener("mousedown", startPainting);
 canvas.addEventListener("mousemove", draw);
 canvas.addEventListener("mouseup", stopPainting);
 canvas.addEventListener("mouseout", stopPainting);
+canvas.addEventListener("click", showModal);
 
 // Event Listeners for touch
 canvas.addEventListener("touchstart", startPainting);
@@ -143,6 +185,10 @@ tools.rectangle.addEventListener("click", () => setActiveTool("rectangle"));
 tools.filledRectangle.addEventListener("click", () => setActiveTool("filledRectangle"));
 tools.circle.addEventListener("click", () => setActiveTool("circle"));
 tools.filledCircle.addEventListener("click", () => setActiveTool("filledCircle"));
+tools.typeText.addEventListener("click", () => {
+    isTyping = true;
+    setActiveTool("typeText");
+});
 
 // Color Picker
 colorPicker.addEventListener("input", (e) => {
@@ -214,6 +260,14 @@ function restoreCanvas(state) {
         ctx.drawImage(img, 0, 0); // Draw the saved state
     };
 }
+
+// Expand Canvas Area when your canvas is full
+expandButton.addEventListener("click", () => {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.height += 600;
+    ctx.putImageData(imageData, 0, 0);
+});
 
 // Helper function
 function createRGBA(hex, opacity) {

@@ -3,14 +3,17 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #f0f0f0;
+    background-color: #e9f2f3;
 }
 
 .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
-    gap: 10px;
+    gap: 5px;
     padding: 10px;
-    background-color: #fff;
+    background-color: #bdeaf1;
     width: 100%;
     justify-content: center;
     align-items: center;
@@ -18,8 +21,50 @@ body {
     flex-wrap: wrap;
 }
 
+.toolbar button {
+    padding: 0.8rem;
+    font-size: 1rem;
+    color: #fff;
+    background: #0258bb;
+    border: none;
+    outline: none;
+    border-radius: 0.5rem;
+    box-shadow: 0.2rem 0.2rem 1rem #777;
+}
+.canvas_container {
+    position: relative;
+}
+
+.canvas_container #expand_canvas {
+    position: absolute;
+    right: 0;
+    padding: 0.8rem;
+    font-size: 1rem;
+    color: #fff;
+    background: linear-gradient(to top, #00154c, #12376e, #23487f);
+    border: none;
+    border-radius: 0.5rem;
+    outline: none;
+    box-shadow: 0.2rem 0.2rem 1rem #777;
+}
+
+.canvas_container button {
+    display: block;
+}
+
+#text-input {
+    position: absolute;
+    left: 0;
+    border: 1px solid gray;
+    background: transparent;
+    width: 200px;
+    height: 150px;
+    font-size: 25px;
+    z-index: 20;
+}
+
 canvas {
-    border: 1px solid #000;
+    border: 3px solid #88c1e6;
     cursor: crosshair;
     background-color: white;
 }
@@ -29,8 +74,8 @@ button {
 }
 
 button.active {
-    border-color: #007bff;
-    background-color: #007bff;
+    border-color: #9900ff;
+    background-color: #9900ff;
     color: white;
 }
 
@@ -59,4 +104,34 @@ button.active {
 #opacityValue {
     border: none;
     padding-right: 10px;
+}
+
+#modal {
+    position: absolute;
+    display: none;
+    font-size: 25px;
+    margin: 0;
+    padding: 0;
+}
+
+#modal #textInput {
+    min-width: 200px;
+    min-height: 150px;
+    font-size: 25px;
+}
+
+#modal #submit_block {
+    margin-top: -5px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#voice {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+#closeModal {
+    display: inline-block;
+    margin-left: auto;
 }
